@@ -1,0 +1,136 @@
+<?xml version="1.0"?>
+<lsml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="LSystem D:/Components/LSML/LSML.xsd"
+	xmlns="LSystem">
+
+    <variables>
+        <variable type="Color" name="TrunkColor"/>
+        <variable type="Color" name="BranchColor"/>
+        <variable type="Color" name="LeafColor"/>
+        <variable type="float" name="PowerValue"/>
+    </variables>
+
+    <declaration>
+
+    <parameters>
+        <parameter type="Color" param_id="color">d.TrunkColor</parameter>
+        <parameter type="Orientation" param_id="direction">Orientation.Idle</parameter>
+        <parameter type="float" param_id="start_width">0.1f</parameter>
+        <parameter type="float" param_id="end_width">0.07f</parameter>
+        <parameter type="bool" param_id="is_leaf">false</parameter>
+        <parameter type="float" param_id="length">1f</parameter>
+        <parameter type="int" param_id="number">0</parameter>
+        <parameter type="float" param_id="power">d.PowerValue</parameter>
+    </parameters>
+
+    <modules>
+        <module id="branchModule">
+            <parameter param_id="direction"/>
+            <parameter param_id="length"/>
+            <parameter param_id="start_width"/>
+            <parameter param_id="end_width"/>
+            <parameter param_id="color"/>
+        </module>
+        <module id="leaf">
+            <parameter param_id="is_leaf"/>
+            <parameter param_id="direction"/>
+            <parameter param_id="length"/>
+            <parameter param_id="start_width"/>
+            <parameter param_id="color"/>
+            <parameter param_id="power"/>
+        </module>
+        <module id="nop"></module>
+        <module id="trunk">
+            <parameter param_id="direction"/>
+            <parameter param_id="length"/>
+            <parameter param_id="start_width"/>
+            <parameter param_id="end_width"/>
+            <parameter param_id="color"/>
+            <parameter param_id="number"/>
+        </module>
+    </modules>
+
+    <axiome>
+        <module id="trunk"/>
+    </axiome>
+
+    </declaration>
+
+    <rule source="trunk">
+        <successor id="trunk" autowire="true">
+            <parameterUpdate param_id="length">source.length * 0.8f</parameterUpdate>
+            <parameterUpdate param_id="number">source.number + 1</parameterUpdate>
+            <parameterUpdate param_id="start_width">source.end_width</parameterUpdate>
+            <parameterUpdate param_id="end_width">source.end_width * 0.8f</parameterUpdate>
+        </successor>
+        <successor id="branchModule">
+            <parameterUpdate param_id="direction">
+                source.direction.Roll(137f * source.number).Pitch(Mathf.Lerp(10f, 60f, random0))
+            </parameterUpdate>
+            <parameterUpdate param_id="length">source.length * 0.7f</parameterUpdate>
+            <parameterUpdate param_id="start_width">source.end_width</parameterUpdate>
+            <parameterUpdate param_id="end_width">source.end_width * 0.6f</parameterUpdate>
+            <parameterUpdate param_id="color">d.BranchColor</parameterUpdate>
+        </successor>
+    </rule>
+
+    <rule source="branchModule">
+        <successor id="branchModule" autowire="true">
+            <parameterUpdate param_id="length">source.length * 0.7f</parameterUpdate>
+            <parameterUpdate param_id="start_width">source.end_width</parameterUpdate>
+            <parameterUpdate param_id="end_width">source.end_width * 0.6f</parameterUpdate>
+        </successor>
+
+        <successor id="branchModule" autowire="true">
+            <parameterUpdate param_id="direction">
+                source.direction.Roll(Mathf.Lerp(-90f, 90f, random1)).Pitch(-Mathf.Lerp(20f, 50f, random0))
+            </parameterUpdate>
+            <parameterUpdate param_id="length">source.length * 0.6f</parameterUpdate>
+            <parameterUpdate param_id="start_width">source.end_width</parameterUpdate>
+            <parameterUpdate param_id="end_width">source.end_width * 0.4f</parameterUpdate>
+        </successor>
+
+        <!-- <successor id="leaf">
+            <parameterUpdate param_id="start_width">0.2f</parameterUpdate>
+            <parameterUpdate param_id="direction">source.direction</parameterUpdate>
+            <parameterUpdate param_id="length">source.length * 0.7f</parameterUpdate>
+            <parameterUpdate param_id="is_leaf">true</parameterUpdate>
+            <parameterUpdate param_id="color">d.LeafColor</parameterUpdate>
+        </successor> -->
+
+        <successor id="leaf">
+            <parameterUpdate param_id="start_width">0.2f</parameterUpdate>
+            <parameterUpdate param_id="direction">
+                source.direction.Roll(Mathf.Lerp(-90f, 90f, random1)).Pitch(-Mathf.Lerp(20f, 50f, random0))
+            </parameterUpdate>
+            <parameterUpdate param_id="length">source.length * 0.6f</parameterUpdate>
+            <parameterUpdate param_id="is_leaf">true</parameterUpdate>
+            <parameterUpdate param_id="color">d.LeafColor</parameterUpdate>
+        </successor>
+    </rule>
+
+    <rule source="trunk">
+        <condition>source.length &lt; 0.1f</condition>
+        <successor id="leaf">
+            <parameterUpdate param_id="start_width">0.2f</parameterUpdate>
+            <parameterUpdate param_id="is_leaf">true</parameterUpdate>
+            <parameterUpdate param_id="length">0f</parameterUpdate>
+            <parameterUpdate param_id="color">d.LeafColor</parameterUpdate>
+        </successor>
+    </rule>
+
+    <rule source="branchModule">
+        <condition>source.length &lt; 0.2f</condition>
+        <successor id="leaf">
+            <parameterUpdate param_id="start_width">0.2f</parameterUpdate>
+            <parameterUpdate param_id="is_leaf">true</parameterUpdate>
+            <parameterUpdate param_id="length">0f</parameterUpdate>
+            <parameterUpdate param_id="color">d.LeafColor</parameterUpdate>
+        </successor>
+    </rule>
+
+    <rule source="leaf">
+        <successor id="nop"></successor>
+    </rule>
+
+</lsml>

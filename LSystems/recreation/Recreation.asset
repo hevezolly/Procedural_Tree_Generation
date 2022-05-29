@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 956d832c7aaf7884ab2fc8152d7d9d61, type: 3}
+  m_Name: Recreation
+  m_EditorClassIdentifier: 
+  text: {fileID: 4900000, guid: 468b8f87cc7c2734cb1e7f66558a647b, type: 3}
+  type: 1
+  variables:
+  - name: TrunkColor
+    valueType: 4
+    _Color: {r: 0.9150943, g: 0.913504, b: 0.9107778, a: 1}
+    _Float: 0
+    _Int: 0
+    _Bool: 0
+    _Vector2: {x: 0, y: 0}
+    _Vector3: {x: 0, y: 0, z: 0}
+    _String: 
+  - name: BranchColor
+    valueType: 4
+    _Color: {r: 0.7264151, g: 0.7264151, b: 0.7264151, a: 1}
+    _Float: 0
+    _Int: 0
+    _Bool: 0
+    _Vector2: {x: 0, y: 0}
+    _Vector3: {x: 0, y: 0, z: 0}
+    _String: 
+  - name: LeafColor
+    valueType: 4
+    _Color: {r: 0.08904416, g: 0.8207547, b: 0.10761542, a: 1}
+    _Float: 0
+    _Int: 0
+    _Bool: 0
+    _Vector2: {x: 0, y: 0}
+    _Vector3: {x: 0, y: 0, z: 0}
+    _String: 
+  - name: PowerValue
+    valueType: 0
+    _Color: {r: 0.058823533, g: 0.8313726, b: 0.078431375, a: 1}
+    _Float: 3.5
+    _Int: 0
+    _Bool: 0
+    _Vector2: {x: 0, y: 0}
+    _Vector3: {x: 0, y: 0, z: 0}
+    _String: 

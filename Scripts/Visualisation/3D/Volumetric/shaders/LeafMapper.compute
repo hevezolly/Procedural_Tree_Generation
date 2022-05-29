@@ -1,0 +1,52 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CreateLeafs
+#include "Leaf.compute"
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+
+RWTexture3D<float4> renderTexture;
+
+int useTextureAsInput;
+
+float surfaceLevel;
+
+int partIndexOffset;
+
+int numberOfParts;
+
+StructuredBuffer<Leaf> parts;
+
+float2 getLeafValue(float3 uvw, Leaf leaf)
+{
+    float dist = distance(uvw, leaf.position) / leaf.radius + 0.00000000000001;
+    return float2(1 / pow(dist, leaf.power), dist);
+}
+
+
+[numthreads(8, 8, 1)]
+void CreateLeafs(uint3 id : SV_DispatchThreadID)
+{
+    int3 dim;
+    renderTexture.GetDimensions(dim.x, dim.y, dim.z);
+    if (id.x >= dim.x || id.y >= dim.y || id.z >= dim.z)
+        return;
+    
+    float3 uvw = id / float3(dim.x, dim.y, dim.z);
+    
+    uint2 leafesDim;
+    float result = 0.00000001 * (1 - useTextureAsInput) + useTextureAsInput * renderTexture[id].x;
+    float minValue = 1000000000. * (1 - useTextureAsInput) + renderTexture[id].w * useTextureAsInput;
+    int closestLeaf = int(renderTexture[id].z);
+    for (int i = partIndexOffset; i < partIndexOffset + numberOfParts; i++)
+    {
+        float2 value = getLeafValue(uvw, parts[i]);
+        result += value.x;
+        if (value.y <= minValue)
+        {
+            minValue = value.y;
+            closestLeaf = i;
+        }
+    }
+    float4 value = float4(result, 0, float(closestLeaf), minValue);
+    renderTexture[id] = value;
+}

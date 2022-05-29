@@ -1,0 +1,115 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 956d832c7aaf7884ab2fc8152d7d9d61, type: 3}
+  m_Name: bookLSystem2
+  m_EditorClassIdentifier: 
+  text: {fileID: 4900000, guid: 5d748578b28861b47926f8d52cf24ac2, type: 3}
+  variables:
+  - name: TrunkColor
+    valueType: 4
+    _Color: {r: 0.6415094, g: 0.4389451, b: 0.069597736, a: 1}
+    _Float: 0
+    _Int: 0
+    _Bool: 0
+    _Vector2: {x: 0, y: 0}
+    _Vector3: {x: 0, y: 0, z: 0}
+    _String: 
+  - name: BranchColor
+    valueType: 4
+    _Color: {r: 0.8396226, g: 0.6474612, b: 0.17030083, a: 1}
+    _Float: 0
+    _Int: 0
+    _Bool: 0
+    _Vector2: {x: 0, y: 0}
+    _Vector3: {x: 0, y: 0, z: 0}
+    _String: 
+  - name: LeafColor
+    valueType: 4
+    _Color: {r: 0.08904416, g: 0.8207547, b: 0.10761542, a: 1}
+    _Float: 0
+    _Int: 0
+    _Bool: 0
+    _Vector2: {x: 0, y: 0}
+    _Vector3: {x: 0, y: 0, z: 0}
+    _String: 
+  - name: TRoll
+    valueType: 0
+    _Color: {r: 0.058823533, g: 0.8313726, b: 0.078431375, a: 1}
+    _Float: 137.5
+    _Int: 0
+    _Bool: 0
+    _Vector2: {x: 0, y: 0}
+    _Vector3: {x: 0, y: 0, z: 0}
+    _String: 
+  - name: WD
+    valueType: 0
+    _Color: {r: 0.058823533, g: 0.8313726, b: 0.078431375, a: 1}
+    _Float: 0.707
+    _Int: 0
+    _Bool: 0
+    _Vector2: {x: 0, y: 0}
+    _Vector3: {x: 0, y: 0, z: 0}
+    _String: 
+  - name: TA
+    valueType: 0
+    _Color: {r: 0.058823533, g: 0.8313726, b: 0.078431375, a: 1}
+    _Float: 45
+    _Int: 0
+    _Bool: 0
+    _Vector2: {x: 0, y: 0}
+    _Vector3: {x: 0, y: 0, z: 0}
+    _String: 
+  - name: BA
+    valueType: 0
+    _Color: {r: 0.058823533, g: 0.8313726, b: 0.078431375, a: 1}
+    _Float: 45
+    _Int: 0
+    _Bool: 0
+    _Vector2: {x: 0, y: 0}
+    _Vector3: {x: 0, y: 0, z: 0}
+    _String: 
+  - name: TCR
+    valueType: 0
+    _Color: {r: 0.058823533, g: 0.8313726, b: 0.078431375, a: 1}
+    _Float: 0.9
+    _Int: 0
+    _Bool: 0
+    _Vector2: {x: 0, y: 0}
+    _Vector3: {x: 0, y: 0, z: 0}
+    _String: 
+  - name: BCR
+    valueType: 0
+    _Color: {r: 0.058823533, g: 0.8313726, b: 0.078431375, a: 1}
+    _Float: 0.9
+    _Int: 0
+    _Bool: 0
+    _Vector2: {x: 0, y: 0}
+    _Vector3: {x: 0, y: 0, z: 0}
+    _String: 
+  - name: Power
+    valueType: 0
+    _Color: {r: 0.058823533, g: 0.8313726, b: 0.078431375, a: 1}
+    _Float: 3
+    _Int: 0
+    _Bool: 0
+    _Vector2: {x: 0, y: 0}
+    _Vector3: {x: 0, y: 0, z: 0}
+    _String: 
+  - name: LeafWidth
+    valueType: 0
+    _Color: {r: 0.058823533, g: 0.8313726, b: 0.078431375, a: 1}
+    _Float: 0.02
+    _Int: 0
+    _Bool: 0
+    _Vector2: {x: 0, y: 0}
+    _Vector3: {x: 0, y: 0, z: 0}
+    _String: 

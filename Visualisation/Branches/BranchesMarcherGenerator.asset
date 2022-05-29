@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 191b278bb0ba3e747831c3b98bf26500, type: 3}
+  m_Name: BranchesMarcherGenerator
+  m_EditorClassIdentifier: 
+  drawGizmos: 0
+  cubesPerAxisInChunk: {x: 50, y: 50, z: 50}
+  chunksPerAxis: {x: 1, y: 1, z: 1}
+  surfaceLevel: {fileID: 11400000, guid: 8729e87b03f33fb4fbc24f910fcb4ba7, type: 2}
+  smoothness: 1
+  smoothShading: 1
+  shader: {fileID: 7200000, guid: 13d3dc576c10253469f537be5cd377a5, type: 3}

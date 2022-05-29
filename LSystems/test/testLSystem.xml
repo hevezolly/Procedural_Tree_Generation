@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<lsml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="LSystem D:/Components/LSML/LSML.xsd"
+	xmlns="LSystem">
+
+	<declaration>
+
+		<parameters>
+			<parameter type="int" param_id="number">0</parameter>
+		</parameters>
+
+		<modules>
+			<module id="A">
+				<parameter param_id="number"/>
+			</module>
+			<module id="B"></module>
+		</modules>
+
+		<axiome>
+			<module id="B"/>
+		</axiome>
+
+	</declaration>
+
+	<rule source="A">
+		<successor id="A">
+			<parameterUpdate param_id="number">source.number + 1</parameterUpdate>
+		</successor>
+		<successor id="B"></successor>
+	</rule>
+
+	<rule source="B">
+		<successor id="A">
+			<parameterUpdate param_id="number">1</parameterUpdate>
+		</successor>
+	</rule>
+
+</lsml>

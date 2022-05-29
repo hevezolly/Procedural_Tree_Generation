@@ -1,0 +1,237 @@
+<?xml version="1.0"?>
+<lsml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="LSystem D:/Components/LSML/LSML.xsd"
+	xmlns="LSystem">
+
+
+    <variables>
+        <variable type="Color" name="TrunkColor"/>
+        <variable type="Color" name="BranchColor"/>
+        <variable type="Color" name="LeafColor"/>
+        <variable type="float" name="SegmentationWidth"/>
+        <variable type="float" name="WidthDecrease"/>
+        <variable type="float" name="BranchWidthDecrease"/>
+        <variable type="float" name="LeafLengthSize"/>
+        <variable type="float" name="LeafRandomSize"/>
+    </variables>
+
+    <declaration>
+
+        <parameters>
+            <parameter type="Color" param_id="color">d.TrunkColor</parameter>
+            <parameter type="Orientation" param_id="direction">Orientation.Idle</parameter>
+            <parameter type="float" param_id="start_width">0.2f</parameter>
+            <parameter type="float" param_id="end_width">0.2f</parameter>
+            <parameter type="bool" param_id="is_leaf">false</parameter>
+            <parameter type="float" param_id="length">1f</parameter>
+            <parameter type="int" param_id="number">1</parameter>
+            <parameter type="float" param_id="power">3</parameter>
+            <parameter type="float" param_id="fall_angle">50</parameter>
+        </parameters>
+
+        <modules>
+            <module id="seed">
+                <parameter param_id="direction"/>
+                <parameter param_id="number"/>
+                <parameter param_id="fall_angle"/>
+            </module>
+            <module id="trunk">
+                <parameter param_id="length"/>
+                <parameter param_id="direction"/>
+                <parameter param_id="fall_angle"/>
+                <parameter param_id="start_width"/>
+                <parameter param_id="end_width"/>
+                <parameter param_id="color"/>
+            </module>
+            <module id="branch">
+                <parameter param_id="length"/>
+                <parameter param_id="direction"/>
+                <parameter param_id="start_width"/>
+                <parameter param_id="end_width"/>
+                <parameter param_id="color"/>
+            </module>
+            <module id="leaf">
+                <parameter param_id="is_leaf"/>
+                <parameter param_id="start_width"/>
+                <parameter param_id="direction"/>
+                <parameter param_id="power"/>
+                <parameter param_id="color"/>
+            </module>
+            <module id="s_branch" base="branch"/>
+            <module id="s_trunk" base="trunk"/>
+            <module id="temp_leaf" base="leaf"/>
+            <module id="["/>
+            <module id="]"/>
+        </modules>
+
+        <axiome>
+            <module id="seed"/>
+        </axiome>
+
+        <contextOptions>
+            <branches>
+                <begin id="["/>
+                <end id="]"/>
+            </branches>
+        </contextOptions>
+
+    </declaration>
+
+
+    <rule source="seed">
+        <successor id="trunk">
+            <parameterUpdate param_id="direction">
+                source.direction.Roll(Mathf.Lerp(0f, 360f, random0)).Pitch(10).Fall(180, source.fall_angle).Flat()
+            </parameterUpdate>
+        </successor>
+    </rule>
+
+    <rule source="trunk">
+        <macros name="dir_change">
+            source.direction.Turn(Mathf.Lerp(-20, 20, random0))
+            .Pitch(Mathf.Lerp(-source.fall_angle - 20, 0, random1))
+            .Fall(180, source.fall_angle).Flat()
+        </macros>
+        <condition>true</condition>
+
+        <successor id="s_trunk" autowire="true"></successor>
+
+        <successor id="trunk" autowire="true">
+            <parameterUpdate param_id="fall_angle">Mathf.Max(source.fall_angle - 10, 10)</parameterUpdate>
+            <parameterUpdate param_id="direction">
+                $dir_change$
+            </parameterUpdate>
+            <parameterUpdate param_id="start_width">source.end_width</parameterUpdate>
+            <parameterUpdate param_id="end_width">source.end_width * d.WidthDecrease</parameterUpdate>
+            <parameterUpdate param_id="length">source.length * Mathf.Lerp(1f, 0.65f, random1)</parameterUpdate>
+        </successor>
+
+        <successor id="temp_leaf">
+            <parameterUpdate param_id="direction">$dir_change$</parameterUpdate>
+            <parameterUpdate param_id="is_leaf">true</parameterUpdate>
+            <parameterUpdate param_id="start_width">
+                source.end_width * d.LeafLengthSize + random5 * d.LeafRandomSize
+            </parameterUpdate>
+            <parameterUpdate param_id="color">d.LeafColor</parameterUpdate>
+        </successor>
+    </rule>
+
+    <!-- trunk or branch at side -->
+        <!-- branch -->
+        <rule source="trunk" weight="2">
+
+            <macros name="dir_change">
+                source.direction.Roll(Mathf.Lerp(-90, 90, random1)).Pitch(-Mathf.Lerp(20, 70, random0))
+            </macros>
+
+            <condition>source.end_width &lt;= d.SegmentationWidth</condition>
+
+            <successor id="s_trunk" autowire="true">
+                <parameterUpdate param_id="end_width">source.end_width * 0.707f</parameterUpdate>
+            </successor>
+
+            <successor id="["/>
+                <successor id="branch" autowire="true">
+                    <parameterUpdate param_id="direction">$dir_change$</parameterUpdate>
+                    <parameterUpdate param_id="start_width">source.start_width * 0.707f</parameterUpdate>
+                    <parameterUpdate param_id="length">source.length * 0.8f</parameterUpdate>
+                    <parameterUpdate param_id="end_width">
+                        source.start_width * 0.707f * d.BranchWidthDecrease
+                    </parameterUpdate>
+                    <parameterUpdate param_id="color">(source.end_width &lt;= 0.9)? d.BranchColor: d.LeafColor</parameterUpdate>
+                </successor>
+                <successor id="leaf">
+                    <parameterUpdate param_id="direction">$dir_change$</parameterUpdate>
+                    <parameterUpdate param_id="is_leaf">true</parameterUpdate>
+                    <parameterUpdate param_id="start_width">
+                        source.end_width * d.LeafLengthSize + random5 * d.LeafRandomSize
+                    </parameterUpdate>
+                    <parameterUpdate param_id="color">d.LeafColor</parameterUpdate>
+                </successor>
+            <successor id="]"/>
+
+            <successor id="trunk" autowire="true">
+                <parameterUpdate param_id="fall_angle">Mathf.Max(source.fall_angle - 10, 10)</parameterUpdate>
+                <parameterUpdate param_id="direction">
+                    source.direction.Turn(Mathf.Lerp(-20, 20, random0)).Pitch(Mathf.Lerp(-source.fall_angle - 20, 0, random1)).Fall(180, source.fall_angle).Flat()
+                </parameterUpdate>
+                <parameterUpdate param_id="length">source.length * Mathf.Lerp(1f, 0.65f, random1)</parameterUpdate>
+                <parameterUpdate param_id="start_width">source.start_width * 0.707f</parameterUpdate>
+                <parameterUpdate param_id="end_width">source.start_width * 0.707f <!-- * 0.707f --></parameterUpdate>
+            </successor>
+
+            <successor id="temp_leaf">
+                <parameterUpdate param_id="direction">$dir_change$</parameterUpdate>
+                <parameterUpdate param_id="is_leaf">true</parameterUpdate>
+                <parameterUpdate param_id="start_width">
+                    source.end_width * d.LeafLengthSize + random5 * d.LeafRandomSize
+                </parameterUpdate>
+                <parameterUpdate param_id="color">d.LeafColor</parameterUpdate>
+            </successor>
+        </rule>
+
+        <!-- trunk -->
+        <rule source="trunk" weight="2">
+
+            <macros name="dir_change1">
+                source.direction.Turn(Mathf.Lerp(-50, 50, random1)).Flat()
+                        .Pitch(Mathf.Lerp(-source.fall_angle - 20, 0, 1 - random2))
+                        .Fall(180, source.fall_angle).Flat()
+            </macros>
+
+            <macros name="dir_change2">
+                source.direction.Turn(Mathf.Lerp(-20, 20, random0)).Flat()
+                    .Pitch(Mathf.Lerp(-source.fall_angle - 20, 0, random2))
+                    .Fall(180, source.fall_angle).Flat()
+            </macros>
+
+            <condition>source.end_width &gt; d.SegmentationWidth</condition>
+
+            <successor id="s_trunk" autowire="true">
+                <parameterUpdate param_id="end_width">source.end_width * 0.707f</parameterUpdate>
+            </successor>
+
+            <successor id="["/>
+                <successor id="trunk" autowire="true">
+                    <parameterUpdate param_id="direction">
+                        $dir_change1$
+                    </parameterUpdate>
+                    <parameterUpdate param_id="start_width">source.start_width * 0.707f</parameterUpdate>
+                    <parameterUpdate param_id="end_width">source.start_width * 0.707f</parameterUpdate>
+
+                </successor>
+                <successor id="temp_leaf">
+                    <parameterUpdate param_id="direction">$dir_change1$</parameterUpdate>
+                    <parameterUpdate param_id="is_leaf">true</parameterUpdate>
+                    <parameterUpdate param_id="start_width">
+                        source.end_width * d.LeafLengthSize + random5 * d.LeafRandomSize
+                    </parameterUpdate>
+                    <parameterUpdate param_id="color">d.LeafColor</parameterUpdate>
+                </successor>
+            <successor id="]"/>
+
+            <successor id="trunk" autowire="true">
+                <parameterUpdate param_id="fall_angle">Mathf.Max(source.fall_angle - 10, 10)</parameterUpdate>
+                <parameterUpdate param_id="direction">
+                    $dir_change2$
+                </parameterUpdate>
+                <parameterUpdate param_id="length">source.length * Mathf.Lerp(1f, 0.65f, random1)</parameterUpdate>
+                <parameterUpdate param_id="start_width">source.start_width * 0.707f</parameterUpdate>
+                <parameterUpdate param_id="end_width">source.start_width * 0.707f <!-- * 0.707f --></parameterUpdate>
+            </successor>
+
+            <successor id="temp_leaf">
+                <parameterUpdate param_id="direction">$dir_change2$</parameterUpdate>
+                <parameterUpdate param_id="is_leaf">true</parameterUpdate>
+                <parameterUpdate param_id="start_width">
+                    source.end_width * d.LeafLengthSize + random5 * d.LeafRandomSize
+                </parameterUpdate>
+                <parameterUpdate param_id="color">d.LeafColor</parameterUpdate>
+            </successor>
+        </rule>
+
+        <rule source="temp_leaf"></rule>
+
+    <!--  -->
+
+</lsml>

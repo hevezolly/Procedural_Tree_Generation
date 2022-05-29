@@ -1,0 +1,35 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel BranchesToDensity
+#include "Branch.compute"
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+RWTexture3D<float> renderTexture;
+RWTexture3D<float4> colorTexture;
+RWTexture3D<float4> normalMap;
+Texture3D<float4> partsTexture;
+
+StructuredBuffer<Branch> parts;
+
+float surfaceLevel;
+
+void fillMaps(int3 id, float3 uvw)
+{
+    float4 partsFrag = partsTexture[id];
+    renderTexture[id] = partsFrag.x;
+    int index = int(partsFrag.z);
+    colorTexture[id] = parts[index].color;
+    float3 cord = lerp(parts[index].start, parts[index].end, partsFrag.y);
+    normalMap[id] = normalize(uvw - cord).xyzz;
+}
+
+
+[numthreads(8,8,1)]
+void BranchesToDensity(uint3 id : SV_DispatchThreadID)
+{
+    int3 dim;
+    renderTexture.GetDimensions(dim.x, dim.y, dim.z);
+    if (id.x >= dim.x || id.y >= dim.y || id.z >= dim.z)
+        return;
+    fillMaps(id, id / ((float3) dim - 1));
+}

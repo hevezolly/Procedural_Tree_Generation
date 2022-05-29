@@ -1,0 +1,70 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CreateBranches
+#include "Branch.compute"
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+
+RWTexture3D<float4> renderTexture;
+
+int useTextureAsInput;
+
+float surfaceLevel;
+
+int partIndexOffset;
+
+int numberOfParts;
+
+StructuredBuffer<Branch> parts;
+
+float getTOnBranch(Branch b, float3 p)
+{
+    float k1sq = dot((p - b.start), (p - b.start));
+    float k2sq = dot((b.end - p), (b.end - p));
+    float lsq = dot((b.end - b.start), (b.end - b.start));
+    float l1 = (k1sq - k2sq + lsq) / (2. * lsq);
+    return clamp(l1, 0, 1);
+}
+
+float getBranchValue(float3 uvw, Branch branch, float t)
+{
+    float3 branchPos = lerp(branch.start, branch.end, t);
+    float branchWidth = lerp(branch.startWidth, branch.endWidth, t);
+    float dist = distance(uvw, branchPos);
+    float coef = dist / branchWidth;
+    return coef;
+}
+
+float smin(float a, float b, float k)
+{
+    float h = clamp(0.5 + 0.5 * (a - b) / k, 0, 1);
+    return lerp(a, b, h) - k * h * (1 - h);
+}
+
+
+[numthreads(8,8,1)]
+void CreateBranches (uint3 id : SV_DispatchThreadID)
+{
+    int3 dim;
+    renderTexture.GetDimensions(dim.x, dim.y, dim.z);
+    if (id.x >= dim.x || id.y >= dim.y || id.z >= dim.z)
+        return;
+    
+    float3 uvw = id / float3(dim.x, dim.y, dim.z);
+   
+    float minValue = 1000000000. * (1 - useTextureAsInput) + renderTexture[id].x * useTextureAsInput;
+    int closestBranch = int(renderTexture[id].z);
+    float t = renderTexture[id].y;
+    for (int i = partIndexOffset; i < numberOfParts + partIndexOffset; i++)
+    {
+        float newT = getTOnBranch(parts[i], uvw);
+        float value = getBranchValue(uvw, parts[i], newT);
+        if (value <= minValue)
+        {
+            minValue = value;
+            t = newT;
+            closestBranch = i;
+        }
+    }
+    float4 value = float4(minValue, t, float(closestBranch), 0);
+    renderTexture[id] = value;
+}

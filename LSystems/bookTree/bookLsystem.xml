@@ -1,0 +1,173 @@
+<?xml version="1.0"?>
+<lsml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="LSystem D:/Components/LSML/LSML.xsd"
+	xmlns="LSystem">
+
+
+    <variables>
+        <variable type="Color" name="TrunkColor"/>
+        <variable type="Color" name="BranchColor"/>
+        <variable type="Color" name="LeafColor"/>
+        <variable type="float" name="Power"/>
+        <variable type="float" name="LeafWidth"/>
+
+        <!-- trunc roll amount -->
+        <variable type="float" name="TRoll"/> 
+        <!-- width decrease -->
+        <variable type="float" name="WD"/>
+        <!-- angle between trunk and branches -->
+        <variable type="float" name="TA"/>
+        <!-- angle between branches and branches -->
+        <variable type="float" name="BA"/>
+        <!-- contraction ratio for trunk -->
+        <variable type="float" name="TCR"/>
+        <!-- contraction ratio for branches -->
+        <variable type="float" name="BCR"/>
+    </variables>
+
+    <declaration>
+
+    <parameters>
+        <parameter type="Color" param_id="color">d.TrunkColor</parameter>
+        <parameter type="Orientation" param_id="direction">Orientation.Idle</parameter>
+        <parameter type="float" param_id="start_width">0.2f</parameter>
+        <parameter type="float" param_id="end_width">0.2f * d.WD</parameter>
+        <parameter type="bool" param_id="is_leaf">false</parameter>
+        <parameter type="float" param_id="length">1f</parameter>
+        <parameter type="int" param_id="number">0</parameter>
+        <parameter type="float" param_id="power">d.Power</parameter>
+    </parameters>
+
+    <modules>
+        <module id="["/>
+        <module id="]"/>
+        <module id="draw">
+            <parameter param_id="color"/>
+            <parameter param_id="direction"/>
+            <parameter param_id="start_width"/>
+            <parameter param_id="end_width"/>
+            <parameter param_id="length"/>
+        </module>
+        <module id="trunk">
+            <parameter param_id="color"/>
+            <parameter param_id="direction"/>
+            <parameter param_id="start_width"/>
+            <parameter param_id="end_width"/>
+            <parameter param_id="length"/>
+        </module>
+        <module id="branch1">
+            <parameter param_id="color"/>
+            <parameter param_id="direction"/>
+            <parameter param_id="start_width"/>
+            <parameter param_id="end_width"/>
+            <parameter param_id="length"/>
+        </module>
+        <module id="branch2">
+            <parameter param_id="color"/>
+            <parameter param_id="direction"/>
+            <parameter param_id="start_width"/>
+            <parameter param_id="end_width"/>
+            <parameter param_id="length"/>
+        </module>
+        <!-- <module id="leaf">
+            <parameter param_id="color"/>
+            <parameter param_id="direction"/>
+            <parameter param_id="start_width"/>
+            <parameter param_id="power"/>
+            <parameter param_id="is_leaf"/>
+        </module> -->
+    </modules>
+
+    <axiome>
+        <module id="trunk"/>
+    </axiome>
+
+    <contextOptions>
+        <branches>
+            <begin id="["/>
+            <end id="]"/>
+        </branches>
+    </contextOptions>
+
+    </declaration>
+
+    <rule source="trunk">
+        <successor id="draw" autowire="true"></successor>
+        <successor id="["></successor>
+
+        <successor id="branch1">
+            <parameterUpdate param_id="direction">source.direction.Pitch(d.TA)</parameterUpdate>
+            <parameterUpdate param_id="length">source.length * d.BCR</parameterUpdate>
+            <parameterUpdate param_id="start_width">source.start_width * d.WD</parameterUpdate>
+            <parameterUpdate param_id="end_width">source.start_width * d.WD * d.WD</parameterUpdate>
+            <parameterUpdate param_id="color">(source.start_width * d.WD * d.WD &lt; d.LeafWidth)? d.LeafColor : d.BranchColor</parameterUpdate>
+        </successor>
+
+        <successor id="]"></successor>
+        <successor id="trunk" autowire="true">
+            <parameterUpdate param_id="direction">source.direction.Roll(d.TRoll)</parameterUpdate>
+            <parameterUpdate param_id="length">source.length * d.TCR</parameterUpdate>
+            <parameterUpdate param_id="start_width">source.start_width * d.WD</parameterUpdate>
+            <parameterUpdate param_id="end_width">source.start_width * d.WD * d.WD</parameterUpdate>
+            <parameterUpdate param_id="color">(source.start_width * d.WD * d.WD &lt; d.LeafWidth)? d.LeafColor : d.TrunkColor</parameterUpdate>
+        </successor>
+    </rule>
+
+    <rule source="branch1">
+        <successor id="draw" autowire="true"></successor>
+        <successor id="["></successor>
+
+        <successor id="branch2" autowire="true">
+            <parameterUpdate param_id="direction">source.direction.Turn(d.BA).Flat()</parameterUpdate>
+            <parameterUpdate param_id="length">source.length * d.BCR</parameterUpdate>
+            <parameterUpdate param_id="start_width">source.start_width * d.WD</parameterUpdate>
+            <parameterUpdate param_id="end_width">source.start_width * d.WD * d.WD</parameterUpdate>
+            <parameterUpdate param_id="color">(source.start_width * d.WD * d.WD &lt; d.LeafWidth)? d.LeafColor : d.BranchColor</parameterUpdate>
+        </successor>
+        <!-- <successor id="leaf">
+            <parameterUpdate param_id="direction">source.direction.Turn(d.BA).Flat()</parameterUpdate>
+            <parameterUpdate param_id="start_width">0.3f</parameterUpdate>
+            <parameterUpdate param_id="is_leaf">true</parameterUpdate>
+            <parameterUpdate param_id="color">d.LeafColor</parameterUpdate>
+        </successor> -->
+
+        <successor id="]"></successor>
+        <successor id="branch2" autowire="true">
+            <parameterUpdate param_id="length">source.length * d.BCR</parameterUpdate>
+            <parameterUpdate param_id="start_width">source.start_width * d.WD</parameterUpdate>
+            <parameterUpdate param_id="end_width">source.start_width * d.WD * d.WD</parameterUpdate>
+            <parameterUpdate param_id="color">(source.start_width * d.WD * d.WD &lt; d.LeafWidth)? d.LeafColor : d.BranchColor</parameterUpdate>
+        </successor>
+        
+    </rule>
+
+    <rule source="branch2">
+        <successor id="draw" autowire="true"></successor>
+
+        <successor id="["></successor>
+
+        <successor id="branch1" autowire="true">
+            <parameterUpdate param_id="direction">source.direction.Turn(-d.BA).Flat()</parameterUpdate>
+            <parameterUpdate param_id="length">source.length * d.BCR</parameterUpdate>
+            <parameterUpdate param_id="start_width">source.start_width * d.WD</parameterUpdate>
+            <parameterUpdate param_id="end_width">source.start_width * d.WD * d.WD</parameterUpdate>
+            <parameterUpdate param_id="color">(source.start_width * d.WD * d.WD &lt; d.LeafWidth)? d.LeafColor : d.BranchColor</parameterUpdate>
+        </successor>
+        <!-- <successor id="leaf">
+            <parameterUpdate param_id="direction">source.direction.Turn(-d.BA).Flat()</parameterUpdate>
+            <parameterUpdate param_id="start_width">0.3f</parameterUpdate>
+            <parameterUpdate param_id="is_leaf">true</parameterUpdate>
+            <parameterUpdate param_id="color">d.LeafColor</parameterUpdate>
+        </successor> -->
+
+        <successor id="]"></successor>
+
+        <successor id="branch1" autowire="true">
+            <parameterUpdate param_id="length">source.length * d.BCR</parameterUpdate>
+            <parameterUpdate param_id="start_width">source.start_width * d.WD</parameterUpdate>
+            <parameterUpdate param_id="end_width">source.start_width * d.WD * d.WD</parameterUpdate>
+            <parameterUpdate param_id="color">(source.start_width * d.WD * d.WD &lt; d.LeafWidth)? d.LeafColor : d.BranchColor</parameterUpdate>
+        </successor>
+    </rule>
+
+</lsml>

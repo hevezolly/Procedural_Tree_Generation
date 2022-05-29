@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<lsml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="LSystem D:/Components/LSML/LSML.xsd"
+	xmlns="LSystem">
+
+
+    <variables>
+        <variable type="Color" name="TrunkColor"/>
+        <variable type="Color" name="BranchColor"/>
+        <variable type="Color" name="LeafColor"/>
+    </variables>
+
+    <declaration>
+
+    <parameters>
+        <parameter type="Color" param_id="color">d.TrunkColor</parameter>
+        <parameter type="Orientation" param_id="direction">Orientation.Idle</parameter>
+        <parameter type="float" param_id="start_width">0.1f</parameter>
+        <parameter type="float" param_id="end_width">0.07f</parameter>
+        <parameter type="bool" param_id="is_leaf">false</parameter>
+        <parameter type="float" param_id="length">1f</parameter>
+        <parameter type="int" param_id="number">0</parameter>
+        <parameter type="float" param_id="power">3</parameter>
+    </parameters>
+
+    <modules></modules>
+
+    <axiome></axiome>
+
+    </declaration>
+
+
+
+</lsml>

@@ -1,0 +1,166 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+#include "CubeTable.compute"
+
+struct Vertex {
+	float3 position;
+    float3 normal;
+    float3 color;
+};
+
+struct Triangle {
+	Vertex vertexC;
+	Vertex vertexB;
+	Vertex vertexA;
+};
+
+
+AppendStructuredBuffer<Triangle> triangles;
+RWTexture3D<float> densiyTexture;
+Texture3D<float4> colorTexture;
+Texture3D<float4> normalMap;
+SamplerState samplercolorTexture;
+float surfaceLevel;
+int3 resolution;
+int3 chunkIndex;
+int3 totalChunks;
+float smoothness;
+int smoothShading;
+
+
+float3 getCornerWorldPos(int3 id)
+{
+    return (id - float3(0.5, 0.5, 0.5)) / (float3(resolution * totalChunks));
+}
+
+float3 getUVW(int3 cornerCord)
+{
+    return cornerCord / (float3(resolution * totalChunks) + float3(1, 1, 1));
+}
+
+float sampleDensity(int3 cornerCord)
+{
+    float3 uvw = getUVW(cornerCord);
+    int3 dimensions;
+    densiyTexture.GetDimensions(dimensions.x, dimensions.y, dimensions.z);
+    int3 cord = uvw * dimensions;
+    return densiyTexture[cord];
+}
+
+float3 calculateNormal(int3 coord)
+{
+    int3 offsetX = int3(1, 0, 0);
+    int3 offsetY = int3(0, 1, 0);
+    int3 offsetZ = int3(0, 0, 1);
+
+    float dx = sampleDensity(coord + offsetX) - sampleDensity(coord - offsetX);
+    float dy = sampleDensity(coord + offsetY) - sampleDensity(coord - offsetY);
+    float dz = sampleDensity(coord + offsetZ) - sampleDensity(coord - offsetZ);
+
+    return normalize(float3(dx, dy, dz));
+}
+
+float4 getColor(float3 uvw)
+{
+    return colorTexture.SampleLevel(samplercolorTexture, uvw, 0);
+}
+
+Vertex createVertex(int3 cornerCordA, int3 cornerCordB)
+{
+    float3 pos1 = getCornerWorldPos(cornerCordA);
+    float3 pos2 = getCornerWorldPos(cornerCordB);
+    float3 uvw1 = getUVW(cornerCordA);
+    float3 uvw2 = getUVW(cornerCordB);
+    float densityA = sampleDensity(cornerCordA);
+    float densityB = sampleDensity(cornerCordB);
+    
+    float smoothT = (surfaceLevel - densityA) / (densityB - densityA);
+    float t = lerp(1 - smoothT, (smoothT), smoothness);
+    float3 pos = lerp(pos1, pos2, t);
+    
+    Vertex vert;
+    if (smoothShading == 1)
+    {
+        float3 aNorm = calculateNormal(cornerCordA);
+        float3 bNorm = calculateNormal(cornerCordB);
+        vert.normal = lerp(aNorm, bNorm, t);
+    }
+    
+    
+    vert.position = pos;
+    vert.color = getColor(lerp(uvw1, uvw2, t));
+    return vert;
+}
+
+[numthreads(8,8,1)]
+void CSMain(int3 idInChunk : SV_DispatchThreadID)
+{
+    if (idInChunk.x >= resolution.x || idInChunk.y >= resolution.y || idInChunk.z >= resolution.z)
+        return;
+    
+    int3 id = chunkIndex * resolution + idInChunk;
+	
+		
+	Triangle t;
+	
+    int3 cornerCoords[8];
+    cornerCoords[0] = id + int3(0, 0, 0);
+    cornerCoords[1] = id + int3(1, 0, 0);
+    cornerCoords[2] = id + int3(1, 0, 1);
+    cornerCoords[3] = id + int3(0, 0, 1);
+    cornerCoords[4] = id + int3(0, 1, 0);
+    cornerCoords[5] = id + int3(1, 1, 0);
+    cornerCoords[6] = id + int3(1, 1, 1);
+    cornerCoords[7] = id + int3(0, 1, 1);
+    
+    int cubeConfig = 0;
+    if (sampleDensity(cornerCoords[0]) < surfaceLevel) cubeConfig |= 1;
+    if (sampleDensity(cornerCoords[1]) < surfaceLevel) cubeConfig |= 2;
+    if (sampleDensity(cornerCoords[2]) < surfaceLevel) cubeConfig |= 4;
+    if (sampleDensity(cornerCoords[3]) < surfaceLevel) cubeConfig |= 8;
+    if (sampleDensity(cornerCoords[4]) < surfaceLevel) cubeConfig |= 16;
+    if (sampleDensity(cornerCoords[5]) < surfaceLevel) cubeConfig |= 32;
+    if (sampleDensity(cornerCoords[6]) < surfaceLevel) cubeConfig |= 64;
+    if (sampleDensity(cornerCoords[7]) < surfaceLevel) cubeConfig |= 128;
+    
+    int edgeIndices[] = triangulation[cubeConfig];
+    
+    for (int tringle_index = 0; tringle_index < 5; tringle_index ++)
+    {
+        int i = tringle_index * 3;
+        if (edgeIndices[i] == -1) break;
+        
+        int edgeIndexA = edgeIndices[i];
+        int a0 = cornerIndexAFromEdge[edgeIndexA];
+        int a1 = cornerIndexBFromEdge[edgeIndexA];
+
+        int edgeIndexB = edgeIndices[i + 1];
+        int b0 = cornerIndexAFromEdge[edgeIndexB];
+        int b1 = cornerIndexBFromEdge[edgeIndexB];
+
+        int edgeIndexC = edgeIndices[i + 2];
+        int c0 = cornerIndexAFromEdge[edgeIndexC];
+        int c1 = cornerIndexBFromEdge[edgeIndexC];
+
+		// Calculate positions of each vertex.
+        Vertex vertexB = createVertex(cornerCoords[a0], cornerCoords[a1]);
+        Vertex vertexA = createVertex(cornerCoords[b0], cornerCoords[b1]);
+        Vertex vertexC = createVertex(cornerCoords[c0], cornerCoords[c1]);
+        
+        if (smoothShading == 0)
+        {
+            vertexB.normal = normalize(cross(vertexA.position - vertexB.position, vertexC.position - vertexB.position));
+            vertexA.normal = -normalize(cross(vertexB.position - vertexA.position, vertexC.position - vertexA.position));
+            vertexC.normal = -normalize(cross(vertexA.position - vertexC.position, vertexB.position - vertexC.position));
+        }
+        
+
+		// Create triangle
+        Triangle tri;
+        tri.vertexA = vertexC;
+        tri.vertexB = vertexB;
+        tri.vertexC = vertexA;
+        
+        triangles.Append(tri);
+    }
+}

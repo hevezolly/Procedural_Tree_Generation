@@ -1,0 +1,35 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel LeafsToDensity
+#include "Leaf.compute"
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+RWTexture3D<float> renderTexture;
+RWTexture3D<float4> colorTexture;
+RWTexture3D<float4> normalMap;
+Texture3D<float4> partsTexture;
+
+StructuredBuffer<Leaf> parts;
+
+float surfaceLevel;
+
+void fillMaps(int3 id, float3 uvw)
+{
+    float4 partsFrag = partsTexture[id];
+    renderTexture[id] = 1 / partsFrag.x;
+    int index = int(partsFrag.z);
+    colorTexture[id] = parts[index].color;
+    float3 cord = parts[index].position;    
+    normalMap[id] = normalize(uvw - cord).xyzz;
+}
+
+
+[numthreads(8, 8, 1)]
+void LeafsToDensity(uint3 id : SV_DispatchThreadID)
+{
+    int3 dim;
+    renderTexture.GetDimensions(dim.x, dim.y, dim.z);
+    if (id.x >= dim.x || id.y >= dim.y || id.z >= dim.z)
+        return;
+    fillMaps(id, id / ((float3) dim - 1));
+}

@@ -1,0 +1,9 @@
+
+struct Branch
+{
+    float3 start;
+    float3 end;
+    float startWidth;
+    float endWidth;
+    float4 color;
+};

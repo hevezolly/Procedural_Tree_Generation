@@ -1,0 +1,217 @@
+<?xml version="1.0"?>
+<lsml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="LSystem D:/Components/LSML/LSML.xsd"
+	xmlns="LSystem">
+
+
+    <variables>
+        <variable type="Color" name="TrunkColor"/>
+        <variable type="Color" name="BranchColor"/>
+        <variable type="Color" name="LeafColor"/>
+        <variable type="float" name="FeedPerStep"/>
+        <variable type="float" name="SplitFactor"/>
+        <variable type="float" name="SplitFactorChange"/>
+        <variable type="float" name="InitialWidth"/>
+        <variable type="float" name="InitialLength"/>
+        <variable type="float" name="GrowThreshold"/>
+        <variable type="float" name="WidthInterpolation"/>
+        <variable type="float" name="ConsumeRatio"/>
+        <variable type="float" name="Randomnes"/>
+    </variables>
+
+    <declaration>
+
+    <parameters>
+        <macros name="pi">3.14159265f</macros>
+        <macros name="float">&lt;float&gt;</macros>
+        <parameter type="Color" param_id="color">d.TrunkColor</parameter>
+        <parameter type="Orientation" param_id="direction">Orientation.Idle</parameter>
+        <parameter type="float" param_id="start_width">d.InitialWidth</parameter>
+        <parameter type="float" param_id="end_width">d.InitialWidth</parameter>
+        <parameter type="Reference&lt;float&gt;" param_id="area">new Reference$float$(d.InitialWidth*d.InitialWidth *$pi$)</parameter>
+        <parameter type="Reference&lt;float&gt;" param_id="A_area">new Reference$float$(d.InitialWidth*d.InitialWidth *$pi$)</parameter>
+        <parameter type="Reference&lt;float&gt;" param_id="B_area">new Reference$float$(d.InitialWidth*d.InitialWidth *$pi$)</parameter>
+        <parameter type="bool" param_id="is_leaf">false</parameter>
+        <parameter type="float" param_id="length">d.InitialLength</parameter>
+        <parameter type="int" param_id="number">1</parameter>
+        <parameter type="float" param_id="power">3</parameter>
+        <parameter type="float" param_id="feed">0</parameter>
+        <parameter type="float" param_id="split_factor">d.SplitFactor</parameter>
+        <parameter type="string" param_id="branch_id">"A"</parameter>
+        <parameter type="bool" param_id="has_childs">false</parameter>
+        <parameter type="float" param_id="consume_ratio">d.ConsumeRatio</parameter>
+        <parameter type="LeafsPositions" param_id="all_leafs">new LeafsPositions().Update(0, Vector3.zero)</parameter>
+        <parameter type="Vector3" param_id="startPos">Vector3.zero</parameter>
+    </parameters>
+
+    <modules>
+        <module id="["></module>
+        <module id="]"></module>
+        <module id="branch">
+            <parameter param_id="color"/>
+            <parameter param_id="direction"/>
+            <parameter param_id="start_width"/>
+            <parameter param_id="end_width"/>
+            <parameter param_id="area"/>
+            <parameter param_id="length"/>
+            <parameter param_id="feed"/>
+            <parameter param_id="split_factor"/>
+            <parameter param_id="branch_id"/>
+            <parameter param_id="has_childs"/>
+            <parameter param_id="A_area"/>
+            <parameter param_id="B_area"/>
+            <parameter param_id="consume_ratio"/>
+            <parameter param_id="number"/>
+            <parameter param_id="all_leafs"/>
+            <parameter param_id="startPos"/>
+        </module>
+    </modules>
+
+    <axiome>
+        <module id="branch"/>
+    </axiome>
+
+    <contextOptions>
+        <branches>
+            <begin id="["/>
+            <end id="]"/>
+        </branches>
+    </contextOptions>
+
+    </declaration>
+
+<!-- =====================ROOT GROW=============== -->
+    <rule source="branch">
+        <condition>!source.has_childs</condition>
+
+        <successor id="branch" autowire="true">
+
+            <macros name="pi">3.14159265f</macros>
+            <macros name="length">(source.length + Tools.Cbrt(d.FeedPerStep))</macros>
+
+            <parameterUpdate param_id="length">$length$</parameterUpdate>
+            <parameterUpdate param_id="feed">d.FeedPerStep - Tools.Cbrt(d.FeedPerStep) * source.area.Value</parameterUpdate>
+            <parameterUpdate param_id="area">
+                source.area.Update((v) =&gt; v + (d.FeedPerStep - Tools.Cbrt(d.FeedPerStep) * v)/($length$))
+            </parameterUpdate>
+            <parameterUpdate param_id="start_width">Mathf.Sqrt(source.area.Value / $pi$)</parameterUpdate>
+            <parameterUpdate param_id="end_width">Mathf.Sqrt(source.area.Value / $pi$)</parameterUpdate>
+            <parameterUpdate param_id="all_leafs">source.all_leafs.Update(source.number, source.startPos + source.direction.up * $length$)</parameterUpdate>
+        </successor>
+    </rule>
+
+    <rule source="branch">
+        <condition>source.has_childs</condition>
+
+        <successor id="branch" autowire="true">
+            <macros name="pi">3.14159265f</macros>
+            <macros name="pass">((source.A_area.Value+source.B_area.Value)/(source.A_area.Value+source.B_area.Value + source.area.Value))</macros>
+            <parameterUpdate param_id="area">
+                source.area.Update((v) =&gt; v + $pass$ * d.FeedPerStep / source.length)
+            </parameterUpdate>
+            <parameterUpdate param_id="start_width">Mathf.Sqrt(source.area.Value / $pi$)</parameterUpdate>
+            <parameterUpdate param_id="end_width">Mathf.Sqrt(source.area.Value / $pi$)</parameterUpdate>
+            <parameterUpdate param_id="feed">d.FeedPerStep * (1 - $pass$)</parameterUpdate>
+        </successor>
+    </rule>
+<!-- =============================================== -->
+
+<!-- =====================BRANCH SPLIT============== -->
+    <rule source="branch" priority="12">
+        <macros name="pi">3.14159265f</macros>
+        <macros name="float">&lt;float&gt;</macros>
+        <macros name="flip_direction">
+            ((Mathf.RoundToInt(random1) - 0.5f) * 2) * 
+            Vector3.Cross(source.direction.up, source.all_leafs.DirToAvg(source.startPos + source.direction.up * source.length, random2, d.Randomnes)).normalized
+        </macros>
+
+        <condition>!source.has_childs &amp;&amp; source.length >= source.split_factor &amp;&amp; source.feed >= d.GrowThreshold</condition>
+
+        <successor id="branch" autowire="true">
+            <parameterUpdate param_id="has_childs">true</parameterUpdate>
+            <parameterUpdate param_id="feed">0</parameterUpdate>
+            <parameterUpdate param_id="all_leafs">source.all_leafs.Remove(source.number)</parameterUpdate>
+        </successor>
+
+        <successor id="["/>
+        <successor id="branch">
+
+
+            <parameterUpdate param_id="all_leafs">source.all_leafs</parameterUpdate>
+            <parameterUpdate param_id="direction">
+                Orientation.Set(Vector3.Lerp($flip_direction$, source.direction.up, d.ConsumeRatio))
+            </parameterUpdate>
+            <parameterUpdate param_id="area">source.A_area</parameterUpdate>
+            <parameterUpdate param_id="branch_id">"A"</parameterUpdate>
+            <parameterUpdate param_id="A_area">new Reference$float$(d.InitialWidth*d.InitialWidth *$pi$)</parameterUpdate>
+            <parameterUpdate param_id="B_area">new Reference$float$(d.InitialWidth*d.InitialWidth *$pi$)</parameterUpdate>
+            <parameterUpdate param_id="split_factor">source.split_factor*d.SplitFactorChange</parameterUpdate>
+            <parameterUpdate param_id="feed">0</parameterUpdate>
+            <parameterUpdate param_id="consume_ratio">d.ConsumeRatio</parameterUpdate>
+            <parameterUpdate param_id="number">source.number * 2</parameterUpdate>
+            <parameterUpdate param_id="startPos">source.startPos + source.direction.up * source.length</parameterUpdate>
+        </successor>
+        <successor id="]"/>
+
+        <successor id="branch">
+            <parameterUpdate param_id="all_leafs">source.all_leafs</parameterUpdate>
+            <parameterUpdate param_id="direction">
+                Orientation.Set(Vector3.Lerp(-$flip_direction$, source.direction.up,1 - d.ConsumeRatio))
+            </parameterUpdate>
+            <parameterUpdate param_id="direction">source.direction.Pitch(-45).Roll(90)</parameterUpdate>
+            <parameterUpdate param_id="area">source.B_area</parameterUpdate>
+            <parameterUpdate param_id="branch_id">"B"</parameterUpdate>
+            <parameterUpdate param_id="A_area">new Reference$float$(d.InitialWidth*d.InitialWidth *$pi$)</parameterUpdate>
+            <parameterUpdate param_id="B_area">new Reference$float$(d.InitialWidth*d.InitialWidth *$pi$)</parameterUpdate>
+            <parameterUpdate param_id="split_factor">source.split_factor*d.SplitFactorChange</parameterUpdate>
+            <parameterUpdate param_id="feed">0</parameterUpdate>
+            <parameterUpdate param_id="consume_ratio">1 - d.ConsumeRatio</parameterUpdate>
+            <parameterUpdate param_id="number">source.number * 2 + 1</parameterUpdate>
+            <parameterUpdate param_id="startPos">source.startPos + source.direction.up * source.length</parameterUpdate>
+        </successor>
+    </rule>
+<!-- ============================================== -->
+
+<!-- =============NON ROOT GROW==================== -->
+    <l_rule left_context="branch" source="branch">
+        <macros name="pi">3.14159265f</macros>
+        <macros name="feed_value">l_context.feed * source.consume_ratio</macros>
+
+        <condition>!source.has_childs</condition>
+
+        <successor id="branch" autowire="true">
+
+            <macros name="length">(source.length + Tools.Cbrt(l_context.feed * source.consume_ratio))</macros>
+            <parameterUpdate param_id="feed">$feed_value$ - Tools.Cbrt($feed_value$) * source.area.Value</parameterUpdate>
+            <parameterUpdate param_id="length">$length$</parameterUpdate>
+            <parameterUpdate param_id="area">
+                source.area.Update((v) =&gt; v + ($feed_value$ - Tools.Cbrt($feed_value$) * v)/($length$))
+            </parameterUpdate>
+            <parameterUpdate param_id="start_width">
+                Mathf.Lerp(Mathf.Sqrt(source.area.Value / $pi$), l_context.end_width,d.WidthInterpolation)
+            </parameterUpdate>
+            <parameterUpdate param_id="end_width">Mathf.Sqrt(source.area.Value / $pi$)</parameterUpdate>
+            <parameterUpdate param_id="all_leafs">source.all_leafs.Update(source.number, source.startPos + source.direction.up * $length$)</parameterUpdate>
+        </successor>
+    </l_rule>
+
+    <l_rule left_context="branch" source="branch">
+        <macros name="pi">3.14159265f</macros>
+        <macros name="feed_value">l_context.feed * source.consume_ratio</macros>
+
+        <condition>source.has_childs</condition>
+
+        <successor id="branch" autowire="true">
+            <macros name="pass">((source.A_area.Value+source.B_area.Value)/(source.A_area.Value+source.B_area.Value + source.area.Value))</macros>
+            <parameterUpdate param_id="area">
+                source.area.Update((v) =&gt; v + $pass$ * $feed_value$ / source.length)
+            </parameterUpdate>
+            <parameterUpdate param_id="start_width">
+                Mathf.Lerp(Mathf.Sqrt(source.area.Value / $pi$), l_context.end_width,d.WidthInterpolation)
+            </parameterUpdate>
+            <parameterUpdate param_id="end_width">Mathf.Sqrt(source.area.Value / $pi$)</parameterUpdate>
+            <parameterUpdate param_id="feed">$feed_value$ * (1 - $pass$)</parameterUpdate>
+        </successor>
+    </l_rule>
+<!-- ================================================ -->
+</lsml>

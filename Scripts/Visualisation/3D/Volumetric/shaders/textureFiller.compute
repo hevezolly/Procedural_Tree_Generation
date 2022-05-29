@@ -1,0 +1,20 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel FillTexture
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+RWTexture3D<float> renderTexture;
+
+float surfaceLevel;
+
+[numthreads(8,8,1)]
+void FillTexture(int3 id : SV_DispatchThreadID)
+{
+    int3 dim;
+    renderTexture.GetDimensions(dim.x, dim.y, dim.z);
+    if (id.x >= dim.x || id.y >= dim.y || id.z >= dim.z)
+        return;
+    float3 uvw = float3(id) / (float3(dim) - float3(1., 1., 1.)) * 2. - 1;
+    float rad = sqrt(uvw.x * uvw.x + uvw.y * uvw.y + uvw.z * uvw.z) * (surfaceLevel + 0.05);
+    renderTexture[id] = rad;
+}

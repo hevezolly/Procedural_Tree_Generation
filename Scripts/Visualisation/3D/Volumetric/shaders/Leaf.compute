@@ -1,0 +1,7 @@
+struct Leaf
+{
+    float3 position;
+    float radius;
+    float4 color;
+    float power;
+};
