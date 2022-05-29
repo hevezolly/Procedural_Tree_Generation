@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <lsml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="LSystem D:/Components/LSML/LSML.xsd"
+	xsi:schemaLocation="LSystem https://raw.githubusercontent.com/hevezolly/LSystem/master/XmlLSystem/LSML.xsd"
 	xmlns="LSystem">
 
 
